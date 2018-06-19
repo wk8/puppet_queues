@@ -1,17 +1,40 @@
 package puppet_queues;
 
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
 import static org.junit.Assert.*;
 
+import java.lang.reflect.InvocationTargetException;
+import java.util.Arrays;
+import java.util.Collection;
+// FIXME: remove this - no need; instead, refactor the multi-threaded
+// test below to use counters per consumer
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class BoundedQueueTest {
+// courtesy of https://stackoverflow.com/a/6724555
+@RunWith(Parameterized.class)
+public class BoundedQueueTest<Q extends ProducerConsumerQueue<Integer>> {
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    @Parameterized.Parameters
+    public static Collection<Object[]> factories() {
+        return Arrays.asList(
+            new Object[]{new BoundedQueueFactory(SingleLockBoundedQueue.class)},
+            new Object[]{new BoundedQueueFactory(DoubleLockBoundedQueue.class)}
+        );
+    }
+
+    private BoundedQueueFactory<Q> factory;
+    public BoundedQueueTest(BoundedQueueFactory<Q> factory) {
+        this.factory = factory;
+    }
+
     private static final long ONE_MILLISECOND = (long) 1e6; // in nanoseconds
 
     // tests the behavior of bounded queues with just one thread
-    @Test public void basicSingleThreadedTestWithBoundedCapacity() throws InterruptedException {
-        BoundedQueue<Integer> queue = new BoundedQueue<Integer>(3);
+    @Test public void basicSingleThreadedTestWithBoundedCapacity() throws InterruptedException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException {
+        Q queue = this.factory.newQueue(3);
 
         // the queue should be empty
         assertNull(queue.dequeue(0));
@@ -47,8 +70,8 @@ public class BoundedQueueTest {
         assertEquals(0, queue.size());
     }
 
-    @Test public void basicSingleThreadedTestWithUnboundedCapacity() throws InterruptedException {
-        BoundedQueue<Integer> queue = new BoundedQueue<Integer>();
+    @Test public void basicSingleThreadedTestWithUnboundedCapacity() throws InterruptedException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException {
+        Q queue = this.factory.newQueue();
 
         for (int i = 0; i < 10000; i++) {
             assertTrue(queue.enqueue(Integer.valueOf(i), 0));
@@ -58,8 +81,8 @@ public class BoundedQueueTest {
         }
     }
 
-    @Test public void cannotEnqueueANullObject() throws InterruptedException {
-        BoundedQueue<Integer> queue = new BoundedQueue<Integer>();
+    @Test public void cannotEnqueueANullObject() throws InterruptedException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException {
+        Q queue = this.factory.newQueue();
 
         int caught = 0;
 
@@ -79,8 +102,8 @@ public class BoundedQueueTest {
     }
 
     // tests the behavior of bounded queues being used by multiple producers and consumers
-    @Test public void basicMultiThreadedTest() throws InterruptedException {
-        int[] queueSizes = {0, 1, 2, 5, 10, 100};
+    @Test public void basicMultiThreadedTest() throws InterruptedException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException {
+        int[] queueSizes = {0, 1, 2, 3, 5, 10, 100};
         int[] threadCounts = {1, 2, 5, 10};
 
         for (int queueSize : queueSizes) {
@@ -99,12 +122,12 @@ public class BoundedQueueTest {
     // also used in runBasicMultiThreadedTest below
     private class ConsumerThread extends Thread {
         private int threadId;
-        private BoundedQueue<Integer> queue;
+        private Q queue;
         private int[] consumed;
         private AtomicInteger consumedCount;
-        private BoundedQueueTest test;
+        private BoundedQueueTest<Q> test;
 
-        public ConsumerThread(int threadId, BoundedQueue<Integer> queue, int[] consumed, AtomicInteger consumedCount, BoundedQueueTest test) {
+        public ConsumerThread(int threadId, Q queue, int[] consumed, AtomicInteger consumedCount, BoundedQueueTest<Q> test) {
             super();
 
             this.threadId = threadId;
@@ -138,8 +161,8 @@ public class BoundedQueueTest {
         }
     }
 
-    private void runBasicMultiThreadedTest(int queueSize, int producerCount, int consumerCount) throws InterruptedException {
-        BoundedQueue<Integer> queue = new BoundedQueue<Integer>(queueSize);
+    private void runBasicMultiThreadedTest(int queueSize, int producerCount, int consumerCount) throws InterruptedException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException {
+        Q queue = this.factory.newQueue(queueSize);
 
         // keeps track of which consumer thread has consumed which item
         int[] consumed = new int[MULTI_THREADED_TEST_TOTAL_SIZE];
@@ -197,6 +220,7 @@ public class BoundedQueueTest {
             int consumerId = consumed[i];
             assertNotEquals(0, consumerId);
         }
+        // FIXME: assert that all consumers have seen a reasonable number of tasks
     }
 
     synchronized private void synchronizedWait() throws InterruptedException {
