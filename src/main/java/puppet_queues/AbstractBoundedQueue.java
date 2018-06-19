@@ -8,7 +8,7 @@ import java.util.concurrent.locks.ReentrantLock;
  * of ProducerConsumerQueue.
  */
 abstract class AbstractBoundedQueue<T> implements ProducerConsumerQueue<T> {
-    int capacity;
+    final int capacity;
 
     /**
      * Creates a new bounded queue.
@@ -70,7 +70,7 @@ abstract class AbstractBoundedQueue<T> implements ProducerConsumerQueue<T> {
 
             return remainingTime > 0;
         } else if (nanosTimeout < 0) {
-            // another good enough implementation could have been to just call replace
+            // another good enough implementation could have been to just replace
             // the timeout with Long.MAX_VALUE, which is 292+ years, and thus a good
             // enough approximation of forever
             while (this.maybeUnsafeSize() == queueSize) {

@@ -9,8 +9,6 @@ import static org.junit.Assert.*;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
 import java.util.Collection;
-// FIXME: remove this - no need; instead, refactor the multi-threaded
-// test below to use counters per consumer
 import java.util.concurrent.atomic.AtomicInteger;
 
 // courtesy of https://stackoverflow.com/a/6724555
