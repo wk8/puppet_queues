@@ -4,3 +4,9 @@
 
 # eclipse
 /bin/
+
+# doc archives
+/doc/*.zip
+
+# Mac OS cruft
+.DS_Store

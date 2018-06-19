@@ -28,3 +28,10 @@ repositories {
     // You can declare any Maven/Ivy/file repository here.
     jcenter()
 }
+
+task doc(type: Javadoc) {
+  source = sourceSets.main.allJava
+  destinationDir = new File('doc')
+  // https://discuss.gradle.org/t/add-custom-javadoc-option-that-does-not-take-an-argument/5959/5
+  options.optionFiles << file('javadoc.options')
+}

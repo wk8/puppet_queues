@@ -5,6 +5,14 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
+/**
+ * An implementation of the ProducerConsumerQueue interface. (ie a FIFO thread-safe bounded queue).
+ *
+ * Uses separate locks for add and remove operations, which makes it generally
+ * more efficient than 'SingleLockBoundedQueue's.
+ *
+ * @param <T> The generic type of objects contained in the queues
+ */
 public class DoubleLockBoundedQueue<T> extends AbstractBoundedQueue<T> {
 
     // lock used when adding items to the queue
@@ -21,10 +29,12 @@ public class DoubleLockBoundedQueue<T> extends AbstractBoundedQueue<T> {
 
     private AtomicInteger size;
 
-    public DoubleLockBoundedQueue() {
-        this(0);
-    }
-
+    /**
+     * Creates a new bounded queue.
+     * A negative capacity means that the queue is unbounded.
+     *
+     * @param capacity The queue's capacity
+     */
     public DoubleLockBoundedQueue(int capacity) {
         super(capacity);
 
@@ -37,6 +47,13 @@ public class DoubleLockBoundedQueue<T> extends AbstractBoundedQueue<T> {
         this.notEmpty = this.removeLock.newCondition();
 
         this.size = new AtomicInteger();
+    }
+
+    /**
+     * Equivalent to DoubleLockBoundedQueue(0)
+     */
+    public DoubleLockBoundedQueue() {
+        this(0);
     }
 
     @Override
@@ -119,7 +136,7 @@ public class DoubleLockBoundedQueue<T> extends AbstractBoundedQueue<T> {
     }
 
     @Override
-    protected int maybeUnsafeSize() {
+    int maybeUnsafeSize() {
         return this.size.get();
     }
 

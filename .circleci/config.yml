@@ -33,3 +33,6 @@ jobs:
 
       # run tests!
       - run: ./gradlew test --info
+
+      # check the documentation is up to date
+      - run: ./gradlew doc && git diff --exit-code && [ -z "$(git ls-files --other --directory --exclude-standard)" ] || eval "echo 'Please re-generate the javadocs with ./gradlew doc' && exit $?"

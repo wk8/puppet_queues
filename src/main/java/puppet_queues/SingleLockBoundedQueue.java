@@ -4,15 +4,26 @@ import java.util.LinkedList;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
+/**
+ * An implementation of the ProducerConsumerQueue interface. (ie a FIFO thread-safe bounded queue).
+ *
+ * Uses a single lock for both add and remove operations.
+ *
+ * @param <T> The generic type of objects contained in the queues
+ */
 public class SingleLockBoundedQueue<T> extends AbstractBoundedQueue<T> {
 
     private LinkedList<T> items;
-    // FIXME: do we need a reentrant lock??
     private ReentrantLock lock;
     private Condition notFull;
     private Condition notEmpty;
 
-    // FIXME: document that capacity < 0 means unbounded capacity
+    /**
+     * Creates a new bounded queue.
+     * A negative capacity means that the queue is unbounded.
+     *
+     * @param capacity The queue's capacity
+     */
     public SingleLockBoundedQueue(int capacity) {
         super(capacity);
 
@@ -22,6 +33,9 @@ public class SingleLockBoundedQueue<T> extends AbstractBoundedQueue<T> {
         this.notEmpty = this.lock.newCondition();
     }
 
+    /**
+     * Equivalent to SingleLockBoundedQueue(0)
+     */
     public SingleLockBoundedQueue() {
         this(0);
     }
@@ -73,7 +87,7 @@ public class SingleLockBoundedQueue<T> extends AbstractBoundedQueue<T> {
     }
 
     @Override
-    protected int maybeUnsafeSize() {
+    int maybeUnsafeSize() {
         return this.items.size();
     }
 

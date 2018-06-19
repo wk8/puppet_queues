@@ -3,10 +3,19 @@ package puppet_queues;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
-public abstract class AbstractBoundedQueue<T> implements ProducerConsumerQueue<T> {
-    protected int capacity;
+/**
+ * Package-private class with the logic common to all implementations
+ * of ProducerConsumerQueue.
+ */
+abstract class AbstractBoundedQueue<T> implements ProducerConsumerQueue<T> {
+    int capacity;
 
-    // FIXME: document that capacity < 0 means unbounded capacity
+    /**
+     * Creates a new bounded queue.
+     * A negative capacity means that the queue is unbounded.
+     *
+     * @param capacity The queue's capacity
+     */
     public AbstractBoundedQueue(int capacity) {
         this.capacity = capacity;
     }
@@ -24,23 +33,34 @@ public abstract class AbstractBoundedQueue<T> implements ProducerConsumerQueue<T
     @Override
     public boolean enqueue(T item, long nanosTimeout) throws InterruptedException {
         if (item == null) {
-            // FIXME: document that nulls are not acceptable
             throw new IllegalArgumentException("cannot enqueue a null object");
         }
 
         return false;
     }
 
-    // FIXME: doc?
-    protected abstract int maybeUnsafeSize();
+    /**
+     * Should return the current size of the queue, in a potentially unsafe way
+     * (i.e. doesn't need to be thread safe)
+     *
+     * @return The current size of the queue.
+     */
+    abstract int maybeUnsafeSize();
 
-    // FIXME: javadoc?
-    // waits at most nanosTimeout nanoseconds for the condition to trigger and for the
-    // queue's size to not be equal to queueSize any more
-    // if the timeout is strictly negative, it never times out
-    // returns true iff that happens before the timeout
-    // assumes the queue is fully locked by the current thread
-    protected boolean waitWhileQueueSizeIs(Condition condition, int queueSize, long nanosTimeout) throws InterruptedException {
+    /**
+     * Waits at most nanosTimeout nanoseconds for the condition to trigger and for the
+     * queue's size to not be equal to queueSize any more
+     * If the timeout is strictly negative, it never times out
+      returns
+     * Assumes the queue is appropriately locked by the current thread
+     *
+     * @param condition
+     * @param queueSize
+     * @param nanosTimeout
+     * @return true iff the size condition is satisfied before the timeout
+     * @throws InterruptedException
+     */
+    boolean waitWhileQueueSizeIs(Condition condition, int queueSize, long nanosTimeout) throws InterruptedException {
         if (nanosTimeout > 0) {
             long remainingTime = nanosTimeout;
 
@@ -64,11 +84,11 @@ public abstract class AbstractBoundedQueue<T> implements ProducerConsumerQueue<T
         }
     }
 
-    protected interface VoidFunction {
+    interface VoidFunction {
         public void call();
     }
 
-    protected void withLock(ReentrantLock lock, VoidFunction lambda) throws InterruptedException {
+    void withLock(ReentrantLock lock, VoidFunction lambda) throws InterruptedException {
         lock.lockInterruptibly();
 
         try {
