@@ -109,7 +109,8 @@ public class BoundedQueueTest<Q extends ProducerConsumerQueue<Integer>> {
         for (int queueSize : queueSizes) {
             for (int producerCount : threadCounts) {
                 for (int consumerCount : threadCounts) {
-                    this.runBasicMultiThreadedTest(queueSize, producerCount, consumerCount);
+                    long nanos = this.runBasicMultiThreadedTest(queueSize, producerCount, consumerCount);
+                    System.out.println(this.factory.type() + " size " + queueSize + " w/ " + producerCount + " producers and " + consumerCount + " consumers: " + (nanos / ONE_MILLISECOND) + " milliseconds");
                 }
             }
         }
@@ -161,12 +162,14 @@ public class BoundedQueueTest<Q extends ProducerConsumerQueue<Integer>> {
         }
     }
 
-    private void runBasicMultiThreadedTest(int queueSize, int producerCount, int consumerCount) throws InterruptedException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException {
+    private long runBasicMultiThreadedTest(int queueSize, int producerCount, int consumerCount) throws InterruptedException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException {
         Q queue = this.factory.newQueue(queueSize);
 
         // keeps track of which consumer thread has consumed which item
         int[] consumed = new int[MULTI_THREADED_TEST_TOTAL_SIZE];
         AtomicInteger consumedCount = new AtomicInteger();
+
+        long startedAt = System.nanoTime();
 
         // let's start the consumers first
         Thread[] consumers = new Thread[consumerCount];
@@ -203,6 +206,8 @@ public class BoundedQueueTest<Q extends ProducerConsumerQueue<Integer>> {
             this.synchronizedWait();
         }
 
+        long elapsed = System.nanoTime() - startedAt;
+
         // first let's shut down all the consumers
         for (Thread consumer : consumers) {
             consumer.interrupt();
@@ -220,7 +225,8 @@ public class BoundedQueueTest<Q extends ProducerConsumerQueue<Integer>> {
             int consumerId = consumed[i];
             assertNotEquals(0, consumerId);
         }
-        // FIXME: assert that all consumers have seen a reasonable number of tasks
+
+        return elapsed;
     }
 
     synchronized private void synchronizedWait() throws InterruptedException {

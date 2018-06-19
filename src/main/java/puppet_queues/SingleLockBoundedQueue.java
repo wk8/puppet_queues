@@ -39,6 +39,11 @@ public class SingleLockBoundedQueue<T> extends AbstractBoundedQueue<T> {
 
             this.items.addLast(item);
             this.notEmpty.signal();
+
+            if (this.items.size() < this.capacity) {
+                this.notFull.signal();
+            }
+
             return true;
         } finally {
             this.lock.unlock();
@@ -56,6 +61,11 @@ public class SingleLockBoundedQueue<T> extends AbstractBoundedQueue<T> {
 
             T result = this.items.removeFirst();
             this.notFull.signal();
+
+            if (this.items.size() > 0) {
+                this.notEmpty.signal();
+            }
+
             return result;
         } finally {
             this.lock.unlock();
