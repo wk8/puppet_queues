@@ -47,7 +47,7 @@ public interface ProducerConsumerQueue<T> {
      *
      * Equivalent to dequeue(-1)
      *
-     * @return The oldest item from the queue; null iff the queue is empty
+     * @return The oldest item from the queue
      * @throws InterruptedException
      */
     public T dequeue() throws InterruptedException;
